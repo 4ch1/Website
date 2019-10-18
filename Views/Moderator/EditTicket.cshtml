@@ -1,0 +1,38 @@
+﻿@model IIS.Models.Tickets.Ticket
+@{
+    Layout = "_Layout";
+}
+<form method="post" action="edit">
+    <input value="@Model.Id" type="hidden" name="id" />
+
+    <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+        <tr>
+            <td class="mdl-data-table__cell--non-numeric">From location:</td>
+            <td>@Model.FromAirport.Location</td>
+        </tr>
+        <tr>
+            <td class="mdl-data-table__cell--non-numeric">To location:</td>
+            <td>@Model.ToAirport.Location</td>
+        </tr>
+        <tr>
+            <td class="mdl-data-table__cell--non-numeric">Date:</td>
+            <td><input name="date" value="@Model.Date " /></td>
+        </tr>
+        <tr>
+            <td class="mdl-data-table__cell--non-numeric">Company:</td>
+            <td>@Model.Company.FullName</td>
+        </tr>
+        <tr>
+            <td class="mdl-data-table__cell--non-numeric">Category:</td>
+            <td><input name="category" value="@Model.Category.FullName" type="text" /></td>
+
+        </tr>
+        <tr>
+            <td class="mdl-data-table__cell--non-numeric"> Price</td>
+            <td> <input name="price" value="@Model.Price" $ /></td>
+        </tr>
+    </table>
+    <input class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" type="submit" value="Save" name="save" />
+    <input class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" type="submit" value="Delete" name="delete" />
+
+</form>

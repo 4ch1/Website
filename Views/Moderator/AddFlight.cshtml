@@ -1,0 +1,127 @@
+﻿@using IIS
+@{
+    Layout = "_Layout";
+}
+
+@inject SessionManager SessionManager
+
+<form id="addFlightForm" method="post" name="AddFlightForm" onsubmit="return validateForm()">
+    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" name="fromAirportShort" type="text" id="fromAirportShort">
+        <label class="mdl-textfield__label" for="fromAirportShort">From:</label>
+    </div>
+
+
+    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" name="toAirportShort" type="text" id="toAirportShort">
+        <label class="mdl-textfield__label" for="toAirportShort">To: </label>
+    </div>
+
+    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label is-dirty">
+        <input class="mdl-textfield__input" name="date" type="datetime" id="date" />
+        <label class="mdl-textfield__label " for="date">Date: </label>
+    </div>
+
+    <div>
+        <label for="time">Time :</label>
+        <input id="time" name="time" value="08:30">
+    </div>
+
+    <div>
+        <label for="category">Category</label>
+        <select form="addFlightForm" name="category">
+            <option value="Business class">Business</option>
+            <option value="Economy class">Economy</option>
+        </select>
+    </div>
+
+    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+        <input class="mdl-textfield__input" name="price" type="text" id="price">
+        <label class="mdl-textfield__label" for="price">Price: </label>
+    </div>
+
+    <input class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" type="submit" value="Add flight" />
+</form>
+
+
+@section scripts{
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="http://momentjs.com/downloads/moment.js"></script>
+
+    <script>
+        $("#fromAirportShort").autocomplete({
+            source: '@Url.Action("GetShort", "Tickets")'
+        });
+
+        $("#toAirportShort").autocomplete({
+            source: '@Url.Action("GetShort", "Tickets")'
+        });
+        $(function() {
+            $("#date").datepicker({ dateFormat: 'yy-mm-dd' }).val();
+        });
+        $(function() {
+            $.widget("ui.timespinner",
+                $.ui.spinner,
+                {
+                    options: {
+                        // seconds
+                        step: 60 * 1000,
+                        // hours
+                        page: 60
+                    },
+
+                    _parse: function(value) {
+                        if (typeof value === "string") {
+                            // already a timestamp
+                            if (Number(value) == value) {
+                                return Number(value);
+                            }
+                            return +Globalize.parseDate(value);
+                        }
+                        return value;
+                    },
+
+                    _format: function(value) {
+                        return Globalize.format(new Date(value), "t");
+                    }
+                });
+
+            $("#spinner").timespinner();
+        });
+
+        function validateForm() {
+            var fromAirportShort = document.forms["AddFlightForm"]["fromAirportShort"];
+            var toAirportShort = document.forms["AddFlightForm"]["fromAirportShort"];
+            var date = document.forms["AddFlightForm"]["date"];
+            var time = document.forms["AddFlightForm"]["time"];
+            var price = document.forms["AddFlightForm"]["price"];
+
+            if (fromAirportShort.value.length != 3) {
+                window.alert("From airport short name should contain 3 characters.");
+                fromAirportShort.focus();
+                return false;
+            }
+            if (toAirportShort.value.length != 3) {
+                window.alert("To airport short name should contain 3 characters.");
+                toAirportShort.focus();
+                return false;
+            }
+            if (!moment(date.value, 'YYYY-MM-DD', true).isValid()) {
+                window.alert("Date format is YYYY-MM-DD.");
+                date.focus();
+                return false;
+            }
+            if (!moment(time.value, 'hh:mm').isValid()) {
+                window.alert("Time format is hh:mm.");
+                time.focus();
+                return false;
+            }
+            if (!price.value.match("\\d+(?:\\.\\d+)?")) {
+                window.alert("Price isn't a number");
+                price.focus();
+                return false;
+            }
+        }
+    </script>
+}

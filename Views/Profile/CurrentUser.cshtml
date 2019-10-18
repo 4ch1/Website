@@ -1,0 +1,35 @@
+﻿@using NewMvcProject.Models
+@model ApplicationUser
+
+@{
+    Layout = "_Layout";
+}
+
+<div>
+    <ul class="mdl-list">
+        <li class="mdl-list__item">
+            <span class="mdl-list__item-primary-content">First Name:@Model.FirstName </span>
+        </li>
+        <li class="mdl-list__item">
+            <span class="mdl-list__item-primary-content">Last Name: @Model.LastName</span>
+        </li>
+        <li class="mdl-list__item">
+            <span class="mdl-list__item-primary-content">Email:@Model.Email</span>
+        </li>
+        <li class="mdl-list__item">
+            <span class="mdl-list__item-primary-content">Address:@Model.Address</span>
+        </li>
+        <li class="mdl-list__item">
+            <span class="mdl-list__item-primary-content">Access level:@Model.Rights</span>
+        </li>
+        @if (Model.Rights == ApplicationUser.RightsEnum.MODERATOR)
+        {
+            <li class="mdl-list__item">
+                <span class="mdl-list__item-primary-content">Company:@((await Model.GetCompany()).FullName)</span>
+            </li>
+        }
+    </ul>
+</div>
+<div>
+    <button class="mdl-button mdl-js-button mdl-button--raised" type="button" onclick="location.href = '@Url.Action("Log_OutAsync", "Profile")'">Sign out</button>
+</div>

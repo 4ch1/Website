@@ -1,0 +1,42 @@
+﻿@{
+    Layout = "_Layout";
+}
+<div>
+    <form action="search" method="get">
+        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" name="fromAirportLocation" type="text" id="fromAirportLocation">
+            <label class="mdl-textfield__label" for="fromAirportLocation">From:</label>
+        </div>
+
+
+        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" name="toAirportLocation" type="text" id="toAirportLocation">
+            <label class="mdl-textfield__label" for="toAirportLocation">To: </label>
+        </div>
+
+        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label is-dirty">
+            <input class="mdl-textfield__input" name="date" type="text" id="date" />
+            <label class="mdl-textfield__label " for="date">Date: </label>
+        </div>
+
+        <input class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" type="submit" value="Search" />
+    </form>
+
+</div>
+
+@section scripts{
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script>
+        $("#fromAirportLocation").autocomplete({
+            source: '@Url.Action("GetName","Tickets")'
+        });
+
+        $("#toAirportLocation").autocomplete({
+            source: '@Url.Action("GetName","Tickets")'
+        });
+        $(function () {
+            $("#date").datepicker({ dateFormat: 'yy-mm-dd' }).val();
+        } );
+    </script>
+}

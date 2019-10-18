@@ -1,0 +1,43 @@
+﻿@model IEnumerable<IIS.Models.Tickets.Ticket>
+
+@{
+    Layout = "_Layout";
+}
+@if (Model.Any())
+{
+    <form method="post" action="buy">
+        <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th class="mdl-data-table__cell--non-numeric">From</th>
+                    <th>To</th>
+                    <th>At</th>
+                    <th>Company</th>
+                    <th>Category</th>
+                    <th>For</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody" runat="server">
+                @foreach (var ticket in Model)
+                {
+                    <tr>
+                        <td><input type="checkbox" value="@ticket.Id" name="id" /></td>
+                        <td class="mdl-data-table__cell--non-numeric">@ticket.FromAirport.Location</td>
+                        <td>@ticket.ToAirport.Location</td>
+                        <td>@ticket.Date</td>
+                        <td>@ticket.Company.FullName</td>
+                        <td>@ticket.Category.FullName</td>
+                        <td>@ticket.Price$</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <input class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" type="submit" value="Buy @Model.Sum(ticket => ticket.Price)$" name="buy" />
+        <input class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" type="submit" value="Delete" name="delete" />
+    </form>
+}
+else
+{
+    <p>Your cart is empty.</p>
+}
