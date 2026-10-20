@@ -125,9 +125,12 @@ def vwap_bands(df: pd.DataFrame, anchor: str = "rth", k: tuple[float, ...] = (1.
 
 
 def relative_volume(df: pd.DataFrame, n: int = 20) -> pd.Series:
-    """Относительный объём (RVOL): очищенный объём бара / медиана за предыдущие n баров (текущий не включён)."""
+    """Относительный объём (RVOL): очищенный объём бара / медиана за предыдущие n баров ТОГО ЖЕ типа сессии
+    (RTH сравнивается с RTH, премаркет с премаркетом; текущий бар не включён). Нулевая база → NaN."""
     v = clean_volume(df["volume"])
-    prev_med = v.shift(1).rolling(n, min_periods=3).median()
+    sess = is_rth(pd.DatetimeIndex(df.index))
+    prev_med = v.groupby(sess).transform(lambda x: x.shift(1).rolling(n, min_periods=3).median())
+    prev_med = prev_med.where(prev_med > 0)
     return v / prev_med
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from ..config import DATA_DIR, TZ
@@ -32,7 +33,12 @@ def normalize(df: pd.DataFrame) -> pd.DataFrame:
     out = out[~out.index.duplicated(keep="last")].sort_index()
     out = out.dropna(subset=["open", "high", "low", "close"])
     out = out[(out["high"] >= out["low"]) & (out["volume"] >= 0)]
-    return out.astype({c: "float64" for c in COLUMNS})
+    out = out.astype({c: "float64" for c in COLUMNS})
+    # «плохие тики»: тень длиннее 5% цены (бывает в премаркете бесплатных данных) обрезается до 2%
+    body_hi = out[["open", "close"]].max(axis=1); body_lo = out[["open", "close"]].min(axis=1)
+    out["high"] = np.where(out["high"] - body_hi > 0.05 * out["close"], body_hi * 1.02, out["high"])
+    out["low"] = np.where(body_lo - out["low"] > 0.05 * out["close"], body_lo * 0.98, out["low"])
+    return out
 
 
 def read_cache(ticker: str, interval: str, data_dir: Path | None = None) -> pd.DataFrame:
