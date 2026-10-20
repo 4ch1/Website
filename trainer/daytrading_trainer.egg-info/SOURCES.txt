@@ -1,0 +1,9 @@
+pyproject.toml
+backend/__init__.py
+backend/cli.py
+backend/config.py
+daytrading_trainer.egg-info/PKG-INFO
+daytrading_trainer.egg-info/SOURCES.txt
+daytrading_trainer.egg-info/dependency_links.txt
+daytrading_trainer.egg-info/requires.txt
+daytrading_trainer.egg-info/top_level.txt

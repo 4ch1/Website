@@ -1,0 +1,22 @@
+Metadata-Version: 2.4
+Name: daytrading-trainer
+Version: 0.1.0
+Summary: Интерактивный тренажёр «угадай, куда пойдёт цена» на реальных интрадей-графиках
+Requires-Python: >=3.11
+Requires-Dist: fastapi>=0.115
+Requires-Dist: uvicorn[standard]>=0.30
+Requires-Dist: pandas>=2.2
+Requires-Dist: numpy>=1.26
+Requires-Dist: pyarrow>=15
+Requires-Dist: yfinance>=0.2.50
+Requires-Dist: scipy>=1.13
+Requires-Dist: pydantic>=2.7
+Provides-Extra: figures
+Requires-Dist: mplfinance>=0.12.10b0; extra == "figures"
+Requires-Dist: matplotlib>=3.8; extra == "figures"
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: pytest-playwright>=0.5; extra == "dev"
+Requires-Dist: httpx>=0.27; extra == "dev"
+Requires-Dist: mplfinance>=0.12.10b0; extra == "dev"
+Requires-Dist: matplotlib>=3.8; extra == "dev"

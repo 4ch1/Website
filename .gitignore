@@ -1,0 +1,11 @@
+# trading course + trainer
+trainer/.venv/
+trainer/data/cache/
+trainer/data/*.sqlite*
+trainer/frontend/node_modules/
+trainer/frontend/dist/
+trainer/.pytest_cache/
+trainer/test-results/
+**/__pycache__/
+*.pyc
+.DS_Store
