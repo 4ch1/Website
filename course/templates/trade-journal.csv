@@ -1,0 +1,2 @@
+date,ticker,setup,direction,timeframe,time_entry,day_type_forecast,align_d,align_15,level,rvol,entry,stop,target,rr_planned,risk_usd,shares,exit_price,time_exit,exit_reason,result_r,mfe_r,mae_r,day_type_actual,plan_compliance,mistakes,screenshot,note,grade_setup
+2026-10-15,SPY,level_reversal,long,5m,09:52,trend_up,yes,yes,PDH 769.0,1.8,769.20,768.70,770.20,2.0,150,300,770.20,10:14,target,2.0,2.3,-0.4,trend_up,A,,2026-10-15_SPY_0952.png,пример записи,4
