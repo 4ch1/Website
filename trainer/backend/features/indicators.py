@@ -98,10 +98,26 @@ def vwap_bands(df: pd.DataFrame, anchor: str = "rth", k: tuple[float, ...] = (1.
     return out
 
 
+def clean_volume(v: pd.Series, n: int = 30, cap: float = 8.0) -> pd.Series:
+    """Каузальная винзоризация объёма: бар не может быть больше cap × медианы ПРЕДЫДУЩИХ n баров.
+
+    Зачем: в бесплатных 1m-данных Yahoo встречаются одиночные «комки» объёма (отложенные
+    блочные сделки печатаются одной минутой), в 50–300 раз больше медианы. Они ломают любые
+    относительные оценки. Срез по медиане прошлых баров не использует будущее.
+    """
+    # Медиана считается внутри своего типа сессии (RTH отдельно от пре/постмаркета), иначе
+    # первые бары основной сессии срезались бы по «тонкой» премаркетной медиане.
+    sess = is_rth(pd.DatetimeIndex(v.index))
+    med = v.groupby(sess).transform(lambda x: x.shift(1).rolling(n, min_periods=5).median())
+    limit = (med * cap)
+    return pd.Series(np.where(limit.notna() & (v > limit), limit, v), index=v.index, name="volume")
+
+
 def relative_volume(df: pd.DataFrame, n: int = 20) -> pd.Series:
-    """Объём бара / среднее за предыдущие n баров (текущий бар не включён)."""
-    prev_avg = df["volume"].shift(1).rolling(n, min_periods=3).mean()
-    return df["volume"] / prev_avg
+    """Относительный объём (RVOL): очищенный объём бара / медиана за предыдущие n баров (текущий не включён)."""
+    v = clean_volume(df["volume"])
+    prev_med = v.shift(1).rolling(n, min_periods=3).median()
+    return v / prev_med
 
 
 def volume_profile(df: pd.DataFrame, bins: int = 30, value_area: float = 0.70) -> dict:

@@ -22,7 +22,7 @@ def _assert_prefix_invariant(fn, df: pd.DataFrame, ks=(5, 37, 120, 400, 900)):
             pd.testing.assert_series_equal(part, full.iloc[:k], check_exact=False, rtol=1e-9, atol=1e-9)
 
 
-@pytest.mark.parametrize("name", ["ema9", "ema200", "sma20", "atr14", "rsi14", "macd", "bollinger", "vwap", "vwap_day", "vwap_bands", "rvol", "all"])
+@pytest.mark.parametrize("name", ["ema9", "ema200", "sma20", "atr14", "rsi14", "macd", "bollinger", "vwap", "vwap_day", "vwap_bands", "rvol", "clean_volume", "all"])
 def test_indicators_prefix_invariant(spy_1m, name):
     df = spy_1m
     fns = {
@@ -37,6 +37,7 @@ def test_indicators_prefix_invariant(spy_1m, name):
         "vwap_day": lambda d: ind.vwap(d, anchor="day"),
         "vwap_bands": lambda d: ind.vwap_bands(d),
         "rvol": lambda d: ind.relative_volume(d),
+        "clean_volume": lambda d: ind.clean_volume(d["volume"]),
         "all": ind.all_indicators,
     }
     _assert_prefix_invariant(fns[name], df)
