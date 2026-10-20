@@ -75,3 +75,11 @@ def test_swing_levels_and_zones(qqq_5m):
         assert zz["confirmed_at"] >= zz["to_idx"] + 1
     nearby = all_levels(qqq_5m)
     assert all(abs(x["price"] - qqq_5m["close"].iloc[-1]) <= 6 * 10 for x in nearby)
+
+
+def test_volume_climax_causal(qqq_5m):
+    from backend.features.volume import volume_climax
+    full = volume_climax(qqq_5m)
+    k = 900
+    part = volume_climax(qqq_5m.iloc[:k])
+    assert [e["idx"] for e in part] == [e["idx"] for e in full if e["idx"] < k]

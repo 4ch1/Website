@@ -55,49 +55,6 @@ def bollinger(s: pd.Series, n: int = 20, k: float = 2.0) -> pd.DataFrame:
     return pd.DataFrame({"mid": mid, "upper": mid + k * std, "lower": mid - k * std, "width": (2 * k * std) / mid})
 
 
-def vwap(df: pd.DataFrame, anchor: str = "rth") -> pd.Series:
-    """VWAP с якорем на начале основной сессии каждого дня (anchor='rth') или на первом
-    баре дня включая премаркет (anchor='day'). Вне основной сессии при anchor='rth' — NaN.
-    """
-    idx = to_ny(df.index)
-    tp = (df["high"] + df["low"] + df["close"]) / 3.0
-    pv = tp * df["volume"]
-    day = day_of(df.index).to_numpy()
-    if anchor == "rth":
-        mask = is_rth(df.index)
-    else:
-        mask = np.ones(len(df), dtype=bool)
-    pv_m = pd.Series(np.where(mask, pv, 0.0), index=df.index)
-    v_m = pd.Series(np.where(mask, df["volume"], 0.0), index=df.index)
-    key = pd.Series(day, index=df.index)
-    cum_pv = pv_m.groupby(key.values).cumsum()
-    cum_v = v_m.groupby(key.values).cumsum()
-    out = cum_pv / cum_v.replace(0, np.nan)
-    out[~mask] = np.nan
-    out.name = "vwap"
-    return out
-
-
-def vwap_bands(df: pd.DataFrame, anchor: str = "rth", k: tuple[float, ...] = (1.0, 2.0)) -> pd.DataFrame:
-    """VWAP ± k * σ, где σ — объёмно-взвешенное стандартное отклонение цены от VWAP с якоря."""
-    v = vwap(df, anchor)
-    tp = (df["high"] + df["low"] + df["close"]) / 3.0
-    day = day_of(df.index).to_numpy()
-    mask = ~v.isna().to_numpy()
-    vol = pd.Series(np.where(mask, df["volume"], 0.0), index=df.index)
-    key = pd.Series(day, index=df.index).values
-    cum_v = vol.groupby(key).cumsum()
-    cum_pv2 = (tp * tp * vol).groupby(key).cumsum()
-    mean2 = cum_pv2 / cum_v.replace(0, np.nan)
-    var = (mean2 - v * v).clip(lower=0)
-    sd = np.sqrt(var)
-    out = pd.DataFrame({"vwap": v})
-    for kk in k:
-        out[f"upper_{kk:g}"] = v + kk * sd
-        out[f"lower_{kk:g}"] = v - kk * sd
-    return out
-
-
 def clean_volume(v: pd.Series, n: int = 30, cap: float = 8.0) -> pd.Series:
     """Каузальная винзоризация объёма: бар не может быть больше cap × медианы ПРЕДЫДУЩИХ n баров.
 
@@ -111,6 +68,60 @@ def clean_volume(v: pd.Series, n: int = 30, cap: float = 8.0) -> pd.Series:
     med = v.groupby(sess).transform(lambda x: x.shift(1).rolling(n, min_periods=5).median())
     limit = (med * cap)
     return pd.Series(np.where(limit.notna() & (v > limit), limit, v), index=v.index, name="volume")
+
+
+
+VWAP_VOLUME_CAP = 4.0  # срез «комков» объёма для VWAP (см. clean_volume)
+
+
+def _vol_for_vwap(df: pd.DataFrame, clean: bool) -> pd.Series:
+    return clean_volume(df["volume"], cap=VWAP_VOLUME_CAP) if clean else df["volume"]
+
+
+def vwap(df: pd.DataFrame, anchor: str = "rth", clean: bool = True) -> pd.Series:
+    """VWAP с якорем на начале основной сессии каждого дня (anchor='rth') или на первом
+    баре дня включая премаркет (anchor='day'). Вне основной сессии при anchor='rth' — NaN.
+    clean=True: объём предварительно винзоризуется (каузально), иначе одиночные артефактные
+    бары бесплатных данных дают ступеньки на VWAP.
+    """
+    idx = to_ny(df.index)
+    vol = _vol_for_vwap(df, clean)
+    tp = (df["high"] + df["low"] + df["close"]) / 3.0
+    pv = tp * vol
+    day = day_of(df.index).to_numpy()
+    if anchor == "rth":
+        mask = is_rth(df.index)
+    else:
+        mask = np.ones(len(df), dtype=bool)
+    pv_m = pd.Series(np.where(mask, pv, 0.0), index=df.index)
+    v_m = pd.Series(np.where(mask, vol, 0.0), index=df.index)
+    key = pd.Series(day, index=df.index)
+    cum_pv = pv_m.groupby(key.values).cumsum()
+    cum_v = v_m.groupby(key.values).cumsum()
+    out = cum_pv / cum_v.replace(0, np.nan)
+    out[~mask] = np.nan
+    out.name = "vwap"
+    return out
+
+
+def vwap_bands(df: pd.DataFrame, anchor: str = "rth", k: tuple[float, ...] = (1.0, 2.0), clean: bool = True) -> pd.DataFrame:
+    """VWAP ± k * σ, где σ — объёмно-взвешенное стандартное отклонение цены от VWAP с якоря."""
+    v = vwap(df, anchor, clean)
+    tp = (df["high"] + df["low"] + df["close"]) / 3.0
+    day = day_of(df.index).to_numpy()
+    mask = ~v.isna().to_numpy()
+    vol = pd.Series(np.where(mask, _vol_for_vwap(df, clean), 0.0), index=df.index)
+    key = pd.Series(day, index=df.index).values
+    cum_v = vol.groupby(key).cumsum()
+    cum_pv2 = (tp * tp * vol).groupby(key).cumsum()
+    mean2 = cum_pv2 / cum_v.replace(0, np.nan)
+    var = (mean2 - v * v).clip(lower=0)
+    sd = np.sqrt(var)
+    out = pd.DataFrame({"vwap": v})
+    for kk in k:
+        out[f"upper_{kk:g}"] = v + kk * sd
+        out[f"lower_{kk:g}"] = v - kk * sd
+    return out
 
 
 def relative_volume(df: pd.DataFrame, n: int = 20) -> pd.Series:
