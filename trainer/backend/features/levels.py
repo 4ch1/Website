@@ -152,12 +152,34 @@ def nearby_levels(levels: list[dict], price: float, span: float) -> list[dict]:
     return sorted([lv for lv in levels if abs(lv["price"] - price) <= span], key=lambda x: x["price"])
 
 
-def all_levels(df: pd.DataFrame, span_atr: float = 6.0, atr_n: int = 14) -> list[dict]:
-    """Все уровни рядом с текущей ценой (видимые бары)."""
+def dedupe_levels(levels: list[dict], tol: float) -> list[dict]:
+    """Уровни ближе tol друг к другу сливаются в один: подписи объединяются, сила суммируется
+    (конфлюэнция). Порядок по цене."""
+    out: list[dict] = []
+    for lv in sorted(levels, key=lambda x: x["price"]):
+        if out and abs(lv["price"] - out[-1]["price"]) <= tol:
+            prev = out[-1]
+            kinds = prev["kind"].split("+") + [lv["kind"]]
+            prev["kind"] = "+".join(dict.fromkeys(kinds))
+            prev["label"] = f"{prev['label']} + {lv['label']}"
+            prev["strength"] = prev["strength"] + lv["strength"]
+            prev["price"] = (prev["price"] + lv["price"]) / 2
+            prev["confluence"] = True
+        else:
+            out.append(dict(lv))
+    return out
+
+
+def all_levels(df: pd.DataFrame, span_atr: float = 6.0, atr_n: int = 14, max_levels: int = 14) -> list[dict]:
+    """Все уровни рядом с текущей ценой (видимые бары), слитые по конфлюэнции, не больше max_levels
+    (сильнейшие; круглые числа — только если совпали с чем-то ещё или их мало)."""
     if df.empty:
         return []
     a = float(atr(df, atr_n).iloc[-1])
     price = float(df["close"].iloc[-1])
     span = span_atr * a
     lv = session_levels(df) + round_levels(price, span) + swing_levels(df)
-    return nearby_levels(lv, price, span)
+    lv = dedupe_levels(nearby_levels(lv, price, span), tol=0.15 * a)
+    if len(lv) > max_levels:
+        lv = sorted(lv, key=lambda x: (-x["strength"], abs(x["price"] - price)))[:max_levels]
+    return sorted(lv, key=lambda x: x["price"])

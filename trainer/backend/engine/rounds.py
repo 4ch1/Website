@@ -116,7 +116,8 @@ def _bars_payload(df: pd.DataFrame) -> list[dict]:
     sess = session_series(df.index).to_numpy()
     out = []
     for (ts, r), s in zip(df.iterrows(), sess):
-        out.append({"t": int(ts.timestamp()), "o": round(float(r["open"]), 4), "h": round(float(r["high"]), 4),
+        # tl — «настенное» время Нью-Йорка как UTC-метка: lightweight-charts рисует в UTC, так на оси будет время ET
+        out.append({"t": int(ts.timestamp()), "tl": int(ts.tz_localize(None).timestamp()), "o": round(float(r["open"]), 4), "h": round(float(r["high"]), 4),
                     "l": round(float(r["low"]), 4), "c": round(float(r["close"]), 4), "v": float(r["volume"]), "s": s})
     return out
 
@@ -145,7 +146,7 @@ def build_round(spec: RoundSpec, data_dir=None) -> dict:
         "hints": None,
     }
     if spec.mode in ("learning", "topic"):
-        adv = advise(mk, len(visible))
+        adv = advise(mk, len(visible), (spec.hint_event or {}).get("kind"))
         payload["hints"] = {"event": spec.hint_event, "day_type": mk["day_type"], "structure": mk["structure"]["trend"],
                             "advisor": adv, "levels": mk["levels"][:8], "snapshot": mk["snapshot"]}
     return _clean(payload)
@@ -164,7 +165,7 @@ def reveal(spec: RoundSpec, prediction: str | None, trade: dict | None, data_dir
     base_trend = trend_baseline(last_close, None if pd.isna(ind["vwap"].iloc[-1]) else float(ind["vwap"].iloc[-1]),
                                 float(ind["ema20"].iloc[-1]), float(ind["ema20"].iloc[-6]) if len(ind) > 6 else float(ind["ema20"].iloc[0]))
     mk = markup(visible)
-    adv = advise(mk, len(visible))
+    adv = advise(mk, len(visible), (spec.hint_event or {}).get("kind"))
     trade_res = None
     if trade and trade.get("side") in ("long", "short") and trade.get("stop") is not None:
         trade_res = simulate_trade(hidden, trade["side"], trade.get("entry"), float(trade["stop"]),

@@ -10,7 +10,7 @@ SETUP_NAMES = {"ORB": "ORB", "GAP_GO": "gap and go", "GAP_FILL": "gap fill", "VW
 BREAKOUT_KINDS = {"ORB", "GAP_GO", "BREAK_RETEST", "FLAG", "PENNANT", "TRI_ASC", "TRI_DESC", "TRI_SYM", "WEDGE_RISING", "WEDGE_FALLING", "RANGE_BREAK", "CUP_HANDLE"}
 
 
-def advise(mk: dict, n_visible: int) -> dict:
+def advise(mk: dict, n_visible: int, prefer_kind: str | None = None) -> dict:
     snap = mk["snapshot"]; dt = mk["day_type"]
     last_idx = n_visible - 1
     mins = snap.get("minutes_since_open") or 0
@@ -38,6 +38,8 @@ def advise(mk: dict, n_visible: int) -> dict:
     # --- сетап на последнем баре?
     fired = [e for e in mk["setups"] if e["idx"] == last_idx]
     fired += [e for e in mk["chart_patterns"] if e["idx"] == last_idx and "entry" in e]
+    if prefer_kind:
+        fired.sort(key=lambda e: 0 if e["kind"] == prefer_kind else 1)
     action, plan, checklist = "wait", None, []
     if fired:
         e = fired[0]
