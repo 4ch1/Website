@@ -62,7 +62,8 @@ def plot(df: pd.DataFrame, name: str, title: str, *, addplots=None, hlines=None,
     """Нарисовать свечи + аннотации. annotate(fig, axes) — колбэк для стрелок/текста."""
     kw = dict(type="candle", style=STYLE, volume=volume, figsize=figsize, returnfig=True,
               ylabel=ylabel, ylabel_lower="объём", tight_layout=True,
-              datetime_format="%H:%M" if (df.index[-1] - df.index[0]) < pd.Timedelta(days=2) else "%m-%d %H:%M",
+              datetime_format=("%Y-%m-%d" if len(df) > 1 and (df.index[1] - df.index[0]) >= pd.Timedelta(hours=20)
+                               else ("%H:%M" if (df.index[-1] - df.index[0]) < pd.Timedelta(days=2) else "%m-%d %H:%M")),
               xrotation=0, warn_too_much_data=10_000)
     if addplots:
         kw["addplot"] = addplots

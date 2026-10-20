@@ -36,6 +36,11 @@ class YFinanceProvider:
 
         df = yf.download(ticker, interval=interval, prepost=True, progress=False,
                          auto_adjust=False, threads=False, **kw)
+        if interval == "1d" and len(df):
+            # дневные бары приходят с датой без времени; это дата по Нью-Йорку, а не UTC
+            idx = pd.DatetimeIndex(df.index)
+            idx = idx.tz_localize(None) if idx.tz is not None else idx
+            df.index = idx.tz_localize("America/New_York")
         return normalize(df)
 
     def fetch(self, ticker: str, interval: str) -> pd.DataFrame:
