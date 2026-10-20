@@ -42,10 +42,14 @@ def normalize(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def read_cache(ticker: str, interval: str, data_dir: Path | None = None) -> pd.DataFrame:
+    """Parquet из кеша; если его нет — CSV с тем же именем (фикстуры тестов, офлайн-запуск)."""
     p = cache_path(ticker, interval, data_dir)
-    if not p.exists():
-        return normalize(None)
-    return normalize(pd.read_parquet(p))
+    if p.exists():
+        return normalize(pd.read_parquet(p))
+    csv = p.with_suffix(".csv")
+    if csv.exists():
+        return read_csv_bars(csv)
+    return normalize(None)
 
 
 def write_cache(ticker: str, interval: str, df: pd.DataFrame, data_dir: Path | None = None) -> Path:

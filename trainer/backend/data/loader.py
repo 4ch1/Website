@@ -50,9 +50,12 @@ def list_available(data_dir: Path | None = None) -> dict[str, list[str]]:
     out: dict[str, list[str]] = {}
     if not base.exists():
         return out
-    for p in sorted(base.glob("*.parquet")):
+    for p in sorted(list(base.glob("*.parquet")) + list(base.glob("*.csv"))):
+        if "_" not in p.stem:
+            continue
         ticker, iv = p.stem.rsplit("_", 1)
-        out.setdefault(ticker, []).append(iv)
+        if iv not in out.setdefault(ticker, []):
+            out[ticker].append(iv)
     return out
 
 
